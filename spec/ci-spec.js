@@ -126,8 +126,7 @@ describe('apm ci', () => {
     wrench.copyDirSyncRecursive(path.join(__dirname, 'fixtures', 'test-module-with-lockfile'), moduleDirectory);
     process.chdir(moduleDirectory);
     const callback = jasmine.createSpy('callback');
-    apm.run(['ci'], callback);
-    await waitsFor('waiting for install to complete', 600000, () => callback.calls.count() > 0);
+    await apmRun(['ci'], callback);
     expect(callback.calls.mostRecent().args[0]).toBeUndefined();
     const pjson0 = CSON.readFileSync(path.join('node_modules', 'test-module-with-dependencies', 'package.json'));
     expect(pjson0.version).toBe('1.1.0');
@@ -144,14 +143,15 @@ describe('apm ci', () => {
     const pjson = CSON.readFileSync(pjsonPath);
     pjson.dependencies['native-module'] = '^1.0.0';
     CSON.writeFileSync(pjsonPath, pjson);
+
     const callback0 = jasmine.createSpy('callback');
     const callback1 = jasmine.createSpy('callback');
+
     await apmRun(['install'], callback0);
     expect(callback0.calls.mostRecent().args[0]).toBeUndefined();
 
     await apmRun(['ci'], callback1);
-
-    expect(callback1.calls.mostRecent()).toBeUndefined();
+    expect(callback1.calls.mostRecent().args[0]).toBeUndefined();
     expect(
       fs.existsSync(
         path.join(moduleDirectory, 'node_modules', 'native-module', 'build', 'Release', 'native.node')
@@ -163,9 +163,10 @@ describe('apm ci', () => {
     const moduleDirectory = path.join(temp.mkdirSync('apm-test-'), 'test-module');
     wrench.copyDirSyncRecursive(path.join(__dirname, 'fixtures', 'test-module'), moduleDirectory);
     process.chdir(moduleDirectory);
+
     const callback = jasmine.createSpy('callback');
-    apm.run(['ci'], callback);
-    await waitsFor('waiting for install to complete', 600000, () => callback.calls.count() > 0);
+    await apmRun(['ci'], callback);
+
     expect(callback.calls.mostRecent().args[0]).not.toBeNull();
   });
 
@@ -177,9 +178,9 @@ describe('apm ci', () => {
     const pjson = CSON.readFileSync(pjsonPath);
     pjson.dependencies['test-module'] = '^1.2.0';
     CSON.writeFileSync(pjsonPath, pjson);
+
     const callback = jasmine.createSpy('callback');
-    apm.run(['ci'], callback);
-    await waitsFor('waiting for install to complete', 600000, () => callback.calls.count() > 0);
+    await apmRun(['ci'], callback);
     expect(callback.calls.mostRecent().args[0]).not.toBeNull();
   });
 });
