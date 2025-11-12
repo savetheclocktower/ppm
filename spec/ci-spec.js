@@ -134,8 +134,7 @@ describe('apm ci', () => {
     expect(pjson1.version).toBe('1.1.0');
   });
 
-  // TODO: Fix.
-  xit('builds a native dependency correctly', async () => {
+  it('builds a native dependency correctly', async () => {
     const moduleDirectory = path.join(temp.mkdirSync('apm-test-'), 'test-module-with-native');
     wrench.copyDirSyncRecursive(path.join(__dirname, 'fixtures', 'test-module-with-lockfile'), moduleDirectory);
     process.chdir(moduleDirectory);
@@ -151,6 +150,7 @@ describe('apm ci', () => {
     expect(callback0.calls.mostRecent().args[0]).toBeUndefined();
 
     await apmRun(['ci'], callback1);
+
     expect(callback1.calls.mostRecent().args[0]).toBeUndefined();
     expect(
       fs.existsSync(
