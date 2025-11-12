@@ -150,7 +150,6 @@ describe('apm ci', () => {
     expect(callback0.calls.mostRecent().args[0]).toBeUndefined();
 
     await apmRun(['ci'], callback1);
-
     expect(callback1.calls.mostRecent().args[0]).toBeUndefined();
     expect(
       fs.existsSync(
