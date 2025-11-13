@@ -1,7 +1,9 @@
 const child_process = require('child_process');
 const fs = require('./fs');
+const fsp = require('fs/promises');
 const path = require('path');
 const npm = require('npm');
+const ini = require('ini');
 let asarPath = null;
 
 module.exports = {
@@ -163,6 +165,43 @@ module.exports = {
   async getSetting(key) {
     await this.loadNpm();
     return npm.config.get(key);
+  },
+
+  async getAllSettings (env = process.env) {
+    let globalPath = this.getGlobalConfigPath();
+    let userPath = this.getUserConfigPath();
+
+    let globalConfig = {};
+    if (await fs.existsSync(globalPath)) {
+      globalConfig = ini.parse(
+        await fsp.readFile(globalPath, { encoding: 'utf8' })
+      );
+    }
+    let localConfig = {};
+    if (await fs.existsSync(userPath)) {
+      localConfig = ini.parse(
+        await fsp.readFile(userPath, { encoding: 'utf8' })
+      );
+    }
+
+    let envConfig = {};
+
+    // Allow all values in config files to be overridden by environment
+    // variables of a certain naming convention.
+    for (let [key, value] of Object.entries(env)) {
+      if (!key.startsWith('npm_config_') && !key.startsWith('ppm_config_')) {
+        continue;
+      }
+      // Trim `npm_config_` or `ppm_config_` from the front.
+      key = key.substring(11);
+      envConfig[key] = value;
+    }
+
+    return {
+      ...globalConfig,
+      ...localConfig,
+      ...envConfig
+    };
   },
 
   setupApmRcFile() {

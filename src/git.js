@@ -77,8 +77,7 @@ exports.getGitVersion = () => {
       spawned.on('close', code => {
         let version;
         if (code === 0) {
-          let _gitName, _versionName;
-          [_gitName, _versionName, version] = Buffer.concat(outputChunks).toString().split(' ');
+          let [_gitName, _versionName, version] = Buffer.concat(outputChunks).toString().split(' ');
           version = version?.trim();
         }
         resolve(version);

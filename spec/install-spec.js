@@ -12,8 +12,9 @@ describe('apm install', () => {
   let atomHome, resourcePath;
 
   beforeEach(() => {
+    console.log('BEFORE EACH');
     spyOnToken();
-    silenceOutput();
+    // silenceOutput(true);
 
     atomHome = temp.mkdirSync('apm-home-dir-');
     process.env.ATOM_HOME = atomHome;
@@ -90,6 +91,12 @@ describe('apm install', () => {
           response.sendFile(path.join(__dirname, 'fixtures', 'install-test-module2.json'));
         }
       );
+      app.get(
+        '/packages/test-module-with-dependencies',
+        (_request, response) => {
+          response.sendFile(path.join(__dirname, 'fixtures', 'install-test-module-with-dependencies.json'));
+        }
+      );
 			app.get(
         '/packages/test-rename',
         (_request, response) => {
@@ -106,6 +113,12 @@ describe('apm install', () => {
         '/packages/test-module-with-symlink',
         (_request, response) => {
           response.sendFile(path.join(__dirname, 'fixtures', 'install-test-module-with-symlink.json'));
+        }
+      );
+      app.get(
+        '/tarball/test-module-with-dependencies-1.1.0.tgz',
+        (_request, response) => {
+          response.sendFile(path.join(__dirname, 'fixtures', 'test-module-with-dependencies-1.1.0.tgz'));
         }
       );
 			app.get(
@@ -155,6 +168,7 @@ describe('apm install', () => {
           process.env.ATOM_PACKAGES_URL = 'http://localhost:3000/packages';
           process.env.ATOM_ELECTRON_VERSION = nodeVersion;
           process.env.npm_config_registry = 'http://localhost:3000/';
+          console.log('DONE');
           resolve();
         });
       });
@@ -185,21 +199,41 @@ describe('apm install', () => {
         const callback = jasmine.createSpy('callback');
         await apmRun(['install', 'test-module'], callback);
 
-        expect(fs.existsSync(existingTestModuleFile)).toBeFalsy();
-        expect(fs.existsSync(path.join(testModuleDirectory, 'index.js'))).toBeTruthy();
-        expect(fs.existsSync(path.join(testModuleDirectory, 'package.json'))).toBeTruthy();
+        expect(
+          fs.existsSync(existingTestModuleFile)
+        ).toBeFalsy();
+        console.log(
+          'We expect',
+          path.join(testModuleDirectory, 'index.js'),
+          'to exist!',
+          fs.existsSync(path.join(testModuleDirectory, 'index.js'))
+        );
+        expect(
+          fs.existsSync(path.join(testModuleDirectory, 'index.js'))
+        ).toBeTruthy();
+        expect(
+          fs.existsSync(path.join(testModuleDirectory, 'package.json'))
+        ).toBeTruthy();
+        console.log('CALLS:', callback.calls.mostRecent().args);
         expect(callback.calls.mostRecent().args[0]).toBeUndefined();
       });
 
       describe('when multiple releases are available', () => {
         it('installs the latest compatible version', async () => {
-          CSON.writeFileSync(path.join(resourcePath, 'package.json'), {version: '1.5.0'});
+          CSON.writeFileSync(
+            path.join(resourcePath, 'package.json'),
+            { version: '1.5.0' }
+          );
           const packageDirectory = path.join(atomHome, 'packages', 'test-module');
 
           const callback = jasmine.createSpy('callback');
           await apmRun(['install', 'multi-module'], callback);
 
-          expect(JSON.parse(fs.readFileSync(path.join(packageDirectory, 'package.json'))).version).toBe('1.1.0');
+          expect(
+            JSON.parse(
+              fs.readFileSync(path.join(packageDirectory, 'package.json'))
+            ).version
+          ).toBe('1.1.0');
           expect(callback.calls.mostRecent().args[0]).toBeUndefined();
         });
 
@@ -238,8 +272,12 @@ describe('apm install', () => {
 
             expect(fs.existsSync(testRenameDirectory)).toBeFalsy();
             expect(fs.existsSync(testModuleDirectory)).toBeTruthy();
-            expect(fs.existsSync(path.join(testModuleDirectory, 'index.js'))).toBeTruthy();
-            expect(fs.existsSync(path.join(testModuleDirectory, 'package.json'))).toBeTruthy();
+            expect(
+              fs.existsSync(path.join(testModuleDirectory, 'index.js'))
+            ).toBeTruthy();
+            expect(
+              fs.existsSync(path.join(testModuleDirectory, 'package.json'))
+            ).toBeTruthy();
             expect(callback.calls.mostRecent().args[0]).toBeUndefined();
           });
         });
@@ -402,7 +440,7 @@ describe('apm install', () => {
     });
 
     describe('when --check is specified', () => {
-      it('compiles a sample native module', async () => {
+      fit('compiles a sample native module', async () => {
         const callback = jasmine.createSpy('callback');
         await apmRun(['install', '--check'], callback);
         expect(callback.calls.mostRecent().args[0]).toBeUndefined();

@@ -15,12 +15,12 @@ function loadNpm() {
     userconfig: config.getUserConfigPath(),
     globalconfig: config.getGlobalConfigPath()
   };
-  return new Promise((resolve, reject) => 
+  return new Promise((resolve, reject) =>
     void npm.load(npmOptions, (error, value) => void(error != null ? reject(error) : resolve(value)))
   );
 };
 
-async function configureRequest(requestOptions){
+async function configureRequest(requestOptions) {
   await loadNpm();
   requestOptions.proxy ??= npm.config.get("https-proxy") ?? npm.config.get("proxy") ?? process.env.HTTPS_PROXY ?? process.env.HTTP_PROXY;
   requestOptions.strictSSL ??= npm.config.get("strict-ssl") ?? true;
@@ -40,85 +40,78 @@ module.exports = {
     await configureRequest(opts);
     const retryCount = opts.retries ?? 0;
 
-    if (typeof opts.strictSSL === "boolean") {
-      const res = await superagent
-        .get(opts.url)
-        .proxy(opts.proxy)
-        .set(opts.headers)
-        .query(opts.qs)
-        .retry(retryCount)
-        .disableTLSCerts()
-        .ok((res) => OK_STATUS_CODES.includes(res.status));
-      return res;
-    }
+    let sa = superagent;
+    if (opts.strictSSL === false) sa = sa.disableTLSCerts();
 
-    const res = await superagent
+    const res = await sa
       .get(opts.url)
       .proxy(opts.proxy)
       .set(opts.headers)
       .query(opts.qs)
       .retry(retryCount)
       .ok((res) => OK_STATUS_CODES.includes(res.status));
+
     return res;
   },
 
   async del(opts) {
     await configureRequest(opts);
-    if (typeof opts.strictSSL === "boolean") {
-      const res = await superagent
-        .delete(opts.url)
-        .proxy(opts.proxy)
-        .set(opts.headers)
-        .query(opts.qs)
-        .disableTLSCerts()
-        .ok((res) => OK_STATUS_CODES.includes(res.status));
-      return res;
-    }
+    let sa = superagent;
+    if (opts.strictSSL === false) sa = sa.disableTLSCerts();
 
-    const res = await superagent
+    const res = await sa
       .delete(opts.url)
       .proxy(opts.proxy)
       .set(opts.headers)
       .query(opts.qs)
       .ok((res) => OK_STATUS_CODES.includes(res.status));
+
     return res;
   },
 
   async post(opts) {
     await configureRequest(opts);
-    if (typeof opts.strictSSL === "boolean") {
-      const res = await superagent
-        .post(opts.url)
-        .proxy(opts.proxy)
-        .set(opts.headers)
-        .query(opts.qs)
-        .disableTLSCerts()
-        .ok((res) => OK_STATUS_CODES.includes(res.status));
-      return res;
-    }
+    let sa = superagent;
+    if (opts.strictSSL === false) sa = sa.disableTLSCerts();
 
-    const res = await superagent.post(opts.url).proxy(opts.proxy).set(opts.headers).query(opts.qs).ok((res) => OK_STATUS_CODES.includes(res.status));
+    const res = await sa
+      .post(opts.url)
+      .proxy(opts.proxy)
+      .set(opts.headers)
+      .query(opts.qs)
+      .disableTLSCerts()
+      .ok((res) => OK_STATUS_CODES.includes(res.status));
+
     return res;
   },
 
   async createReadStream(opts) {
     await configureRequest(opts);
-    if (typeof opts.strictSSL === "boolean") {
-      return superagent.get(opts.url).proxy(opts.proxy).set(opts.headers).query(opts.qs).disableTLSCerts().ok((res) => OK_STATUS_CODES.includes(res.status));
-    } else {
-      return superagent.get(opts.url).proxy(opts.proxy).set(opts.headers).query(opts.qs).ok((res) => OK_STATUS_CODES.includes(res.status));
-    }
+    let sa = superagent;
+    if (opts.strictSSL === false) sa = sa.disableTLSCerts();
+
+    return sa
+      .get(opts.url)
+      .proxy(opts.proxy)
+      .set(opts.headers)
+      .query(opts.qs)
+      .ok((res) => OK_STATUS_CODES.inclures(res.status));
   },
 
   getErrorMessage(body, err) {
     if (err?.status === 503) {
       return `${err.response.req.host} is temporarily unavailable, please try again later.`;
     } else {
-      return err?.response?.body ?? err?.response?.error ?? err ?? body.message ?? body.error ?? body;
+      return err?.response?.body ??
+        err?.response?.error ??
+        err ??
+        body.message ??
+        body.error ??
+        body;
     }
   },
 
-  debug(debug) {
+  debug(_debug) {
     // Superagent does not support debug flags like request did
     return;
   }

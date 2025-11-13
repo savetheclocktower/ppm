@@ -1,6 +1,13 @@
 const auth = require('../src/auth');
 const apm = require('../src/apm-cli');
 
+// Some specs test `apm` actions that could routinely take more than five
+// seconds in CI — enough to warrant making 60 seconds the default timeout
+// interval.
+//
+// If a given suite could not possibly need that much time, it is encouraged
+// to change this interval in a `beforeAll` hook and change it back in an
+// `afterAll` hook.
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
 // A convenience function around `apm.run` that returns a `Promise`; this saves
